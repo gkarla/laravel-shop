@@ -75,7 +75,12 @@ trait ShopCalculationsTrait
      *
      * @return float
      */
-    public function getTotalDiscountAttribute() { /* TODO */ }
+    public function getTotalDiscountAttribute()
+    {
+        if (empty($this->shopCalculations)) $this->runCalculations();
+
+        return round($this->shopCalculations->totalDiscount, 2);
+    }
 
     /**
      * Returns total amount to be charged base on total price, tax and discount.
@@ -85,7 +90,7 @@ trait ShopCalculationsTrait
     public function getTotalAttribute()
     {
         if (empty($this->shopCalculations)) $this->runCalculations();
-        return $this->totalPrice + $this->totalTax + $this->totalShipping;
+        return $this->totalPrice + $this->totalTax + $this->totalShipping - $this->totalDiscount;
     }
 
     /**
@@ -123,7 +128,10 @@ trait ShopCalculationsTrait
      *
      * @return string
      */
-    public function getDisplayTotalDiscountAttribute() { /* TODO */ }
+    public function getDisplayTotalDiscountAttribute()
+    {
+        return Shop::format($this->totalDiscount);
+    }
 
     /**
      * Returns formatted total amount to be charged base on total price, tax and discount.
@@ -173,6 +181,22 @@ trait ShopCalculationsTrait
             )
             ->where($this->table . '.id', $this->attributes['id'])
             ->first();
+
+        //Add total discount, edit totalPrice
+        $PivotOn = get_class($this);
+        $Discounts = $this->calculateDiscounts($PivotOn, $this->attributes['id']);
+        if(get_class($this)=='App\Order')
+        {
+            $this->shopCalculations->totalShipping=$this->shipping;
+        }
+        //Remove Cash Discount
+        //Remove % Discount
+        $PercentageDiscount = $this->shopCalculations->totalPrice * $Discounts['percent'];
+        $this->shopCalculations->CashDiscount = $Discounts['cash'];
+        $this->shopCalculations->PercentDiscount = $Discounts['percent'];
+        $this->shopCalculations->PercentCashDiscount = $PercentageDiscount;
+        $this->shopCalculations->totalDiscount = $Discounts['cash'] + $PercentageDiscount;
+
         if (Config::get('shop.cache_calculations')) {
             Cache::put(
                 $cacheKey,
@@ -192,6 +216,36 @@ trait ShopCalculationsTrait
         if (Config::get('shop.cache_calculations')) {
             Cache::forget($this->calculationsCacheKey);
         }
+    }
+
+    /**
+     * Calculates the discount required on a class with a specified id
+     * @param $PivotOn
+     * @param $id
+     * @return array
+     */
+    private function calculateDiscounts($PivotOn, $id)
+    {    $Discount = [
+            'cash'    => 0.00,
+            'percent' => 0.00,
+        ];
+        $Class = new $PivotOn;
+        $Coupons = $Class::find($id);
+
+        if($Coupons){
+            $Coupons=$Coupons->coupons;
+            if($Coupons){
+                foreach ($Coupons as $coupon)
+                {
+                    if (!is_null($coupon->value) && $coupon->value != 0.00 )
+                        $Discount['cash'] += $coupon->value;
+                    else
+                        $Discount['percent'] += $coupon->discount;
+                }
+            }
+        }
+
+        return $Discount;
     }
 
 }

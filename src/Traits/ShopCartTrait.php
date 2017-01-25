@@ -53,7 +53,7 @@ trait ShopCartTrait
      */
     public function user()
     {
-        return $this->belongsTo(Config::get('auth.model'), 'user_id');
+        return $this->belongsTo('\App\User', 'user_id');
     }
 
     /**

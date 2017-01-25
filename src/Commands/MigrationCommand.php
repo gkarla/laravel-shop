@@ -129,7 +129,7 @@ class MigrationCommand extends Command
 
         $usersTable  = Config::get('auth.table');
         $userModel   = Config::get('auth.model');
-        $userKeyName = (new $userModel())->getKeyName();
+        $userKeyName = (new \App\User)->getKeyName();
 
         $data = array_merge($data, compact('usersTable', 'userKeyName'));
 

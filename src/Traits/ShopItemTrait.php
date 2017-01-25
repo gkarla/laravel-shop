@@ -164,4 +164,12 @@ trait ShopItemTrait
             ->count() > 0;
     }
 
+    public function getTotalAttribute()
+    {
+        return $this->quantity * $this->price;
+    }
+    public function getDisplayTotalAttribute()
+    {
+        return Shop::format($this->getTotalAttribute());
+    }
 }
