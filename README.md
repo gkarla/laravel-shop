@@ -1,4 +1,4 @@
-LARAVEL SHOP (Laravel 5.1 Package)
+LARAVEL SHOP with coupon functionality (in test) (Laravel 5.1 Package)
 --------------------------------
 
 [![Latest Stable Version](https://poser.pugx.org/amsgames/laravel-shop/v/stable)](https://packagist.org/packages/amsgames/laravel-shop)
